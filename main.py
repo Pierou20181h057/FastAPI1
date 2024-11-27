@@ -1,20 +1,26 @@
-from fastapi import FastAPI, Body
-from fastapi.responses import HTMLResponse
-from pydantic import BaseModel
-from typing import Optional
-
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse, JSONResponse
+from utils.jwt_manager import create_token
+from config.database import engine, Base
+from middlewares.error_handler import ErrorHandler
+from routers.movie import movie_router
+from routers.user import user_router
 
 app = FastAPI()
 app.title = "Mi aplicación FastAPI"
 app.version = "0.0.1"
 
-class Movie(BaseModel):
-    id: Optional[int] = None
-    title: str
-    overview: str
-    year: int
-    rating: float
-    category: str
+app.add_middleware(ErrorHandler)
+app.include_router(user_router)
+app.include_router(movie_router)
+
+
+Base.metadata.create_all(bind=engine)
+
+
+
+
+
 
 movies =[
     {
@@ -40,50 +46,4 @@ def message():
     return HTMLResponse('<h1>Hello Wolrd</h1>')
 
 
-@app.get('/movies', tags=['movies'])
-def get_movies():
-    return movies
 
-@app.get('/movies/{id}', tags=['movies'])
-def get_movies(id: int):
-    for item in movies:
-        if item["id"] == id:
-            return item
-    return []
-
-@app.get('/movies/', tags=['movies'])
-def  get_movies_by_category(category:str, year:int):
-    for item in movies:
-        if item["year"] == str(year):
-            return item
-    return []
-
-@app.post('/movies', tags=['movies'])
-def create_movie(id: int = Body(), title: str = Body(), overview: str = Body(), year:int = Body(), rating: float = Body(), category: str = Body()):
-    movies.append({
-        "id": id,
-        "title": title,
-        "overview": overview,
-        "year": year,
-        "rating": rating,
-        "category": category
-    })
-    return title
-
-@app.put('/movies/{id}', tags=['movies'])
-def update_movies(movie: Movie):
-    for item in movies:
-        if item["id"] == id:
-            item['title'] = title,
-            item['overview'] = overview,
-            item['year'] = year,
-            item['rating'] = rating,
-            item['category'] = category
-            return movies
-        
-@app.delete('/movies/{id}', tags=['movies'])
-def delete_movie(id: int):
-    for item in movies:
-        if item["id"] == id:
-            movies.remove(item)
-            return movies
